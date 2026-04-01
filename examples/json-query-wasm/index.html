@@ -4,7 +4,7 @@
   <title>Jolt zkVM — JSON Query (no validation, ZK)</title>
   <style>
     body { font-family: monospace; max-width: 700px; margin: 40px auto; }
-    input, textarea { font-size: 14px; padding: 4px 8px; font-family: monospace; }
+    input, textarea, select { font-size: 14px; padding: 4px 8px; font-family: monospace; }
     input { width: 300px; }
     textarea { width: 100%; height: 120px; }
     button { font-size: 18px; padding: 4px 16px; cursor: pointer; }
@@ -15,7 +15,19 @@
   <h2>Jolt zkVM — Private JSON Query (navigate-only, ZK, MT)</h2>
   <p>Navigates a dot-path without full JSON validation. Faster than json-parse but only proves the queried path is navigable.</p>
   <div>
-    <label>Query: <input id="query" value="records.30.amount"></label>
+    <label>Size:
+      <select id="size" onchange="onSizeChange()">
+        <option value="1">1 KB (18 records)</option>
+        <option value="2">2 KB (36 records)</option>
+        <option value="4" selected>4 KB (72 records)</option>
+        <option value="8">8 KB (142 records)</option>
+        <option value="16">16 KB (280 records)</option>
+        <option value="32">32 KB (556 records)</option>
+      </select>
+    </label>
+  </div>
+  <div style="margin-top:8px">
+    <label>Query: <input id="query" value="records.5.amount"></label>
     <button id="btn" onclick="runProve()" disabled>Prove</button>
   </div>
   <div style="margin-top:8px"><label>Private JSON (not revealed to verifier):</label></div>
@@ -25,9 +37,11 @@
   <script type="module">
     import init, { initThreadPool, preprocess, prove_json_query } from './pkg/json_query_wasm.js';
 
-    function buildJson() {
+    const SIZES = { 1: 18, 2: 36, 4: 72, 8: 142, 16: 280, 32: 556 };
+
+    function buildJson(count) {
       const records = [];
-      for (let i = 0; i < 60; i++) {
+      for (let i = 0; i < count; i++) {
         records.push({
           id: i,
           amount: (i + 1) * 100,
@@ -38,9 +52,21 @@
       return JSON.stringify({ records });
     }
 
-    const json = buildJson();
-    document.getElementById('json').value = json;
+    let json = '';
+
+    window.onSizeChange = function() {
+      const kb = document.getElementById('size').value;
+      const count = SIZES[kb];
+      json = buildJson(count);
+      document.getElementById('json').value = json;
+      document.getElementById('query').value = `records.${count - 1}.amount`;
+      if (out.textContent.startsWith('Ready')) {
+        out.textContent = `Ready. JSON: ~${kb}KB (${count} records, ${json.length} bytes).`;
+      }
+    };
+
     const out = document.getElementById('output');
+    onSizeChange();
 
     async function setup() {
       out.textContent = 'Loading WASM...';
@@ -57,15 +83,17 @@
       const prepTime = ((performance.now() - t0) / 1000).toFixed(1);
 
       document.getElementById('btn').disabled = false;
-      out.textContent = `Ready (${threads} threads, ZK mode). Preprocessing: ${prepTime}s. JSON: ${json.length} bytes.`;
+      const kb = document.getElementById('size').value;
+      out.textContent = `Ready (${threads} threads, ZK mode). Preprocessing: ${prepTime}s. JSON: ~${kb}KB (${json.length} bytes).`;
     }
 
     window.runProve = async function() {
       const btn = document.getElementById('btn');
       const query = document.getElementById('query').value;
+      const kb = document.getElementById('size').value;
 
       btn.disabled = true;
-      out.textContent = `Query: "${query}"\nJSON: ${json.length} bytes (private)\nProving...`;
+      out.textContent = `Query: "${query}"\nJSON: ~${kb}KB (${json.length} bytes, private)\nProving...`;
 
       await new Promise(r => setTimeout(r, 50));
 
@@ -75,7 +103,8 @@
         const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
         const result = JSON.parse(resultJson);
 
-        let msg = `Query: "${query}"\n`;
+        let msg = `Size: ~${kb}KB (${json.length} bytes)\n`;
+        msg += `Query: "${query}"\n`;
         msg += `Value: ${result.value}\n`;
         msg += `Blake2b hash of JSON: ${result.blake2b_hash}\n`;
         msg += `Prove time: ${elapsed}s (excluding preprocessing)\n`;

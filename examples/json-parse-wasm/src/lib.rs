@@ -1,6 +1,8 @@
 use std::sync::OnceLock;
 use wasm_bindgen::prelude::*;
 
+extern crate jolt_inlines_blake2;
+
 use common::jolt_device::{MemoryConfig, MemoryLayout};
 use jolt_core::ark_bn254::Fr;
 use jolt_core::curve::Bn254Curve;
@@ -17,7 +19,7 @@ const GUEST_ELF: &[u8] = include_bytes!("../guest.elf");
 fn base_memory_config() -> MemoryConfig {
     MemoryConfig {
         heap_size: 32 * 1024 * 1024,
-        stack_size: 65536,
+        stack_size: 131072,
         max_input_size: 4096,
         max_output_size: 4096,
         max_untrusted_advice_size: 8192,

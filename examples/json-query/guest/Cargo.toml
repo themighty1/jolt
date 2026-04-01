@@ -10,3 +10,4 @@ guest = []
 jolt = { package = "jolt-sdk", path = "../../../jolt-sdk" }
 jolt-inlines-blake2.workspace = true
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+gjson = { git = "https://github.com/themighty1/gjson.rs" }

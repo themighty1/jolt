@@ -234,7 +234,7 @@ function __wbg_get_imports(memory) {
         __wbindgen_object_drop_ref: function(arg0) {
             takeObject(arg0);
         },
-        memory: memory || new WebAssembly.Memory({initial:28,maximum:65536,shared:true}),
+        memory: memory || new WebAssembly.Memory({initial:29,maximum:65536,shared:true}),
     };
     return {
         __proto__: null,

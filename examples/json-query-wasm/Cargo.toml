@@ -17,3 +17,4 @@ console_error_panic_hook = "0.1"
 rayon = { workspace = true }
 wasm-bindgen-rayon = "1.2"
 hex.workspace = true
+jolt-inlines-blake2 = { workspace = true, features = ["host"] }

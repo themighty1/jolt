@@ -1,6 +1,8 @@
 use std::sync::OnceLock;
 use wasm_bindgen::prelude::*;
 
+extern crate jolt_inlines_blake3;
+
 use common::jolt_device::{MemoryConfig, MemoryLayout};
 use jolt_core::ark_bn254::Fr;
 use jolt_core::curve::Bn254Curve;

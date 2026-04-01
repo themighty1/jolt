@@ -2277,6 +2277,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "gjson"
+version = "0.8.1"
+source = "git+https://github.com/themighty1/gjson.rs#649fe782b806273bf9568f9bee082f3e4ad3125a"
+
+[[package]]
 name = "glob"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2624,6 +2629,7 @@ dependencies = [
  "console_error_panic_hook",
  "hex",
  "jolt-core",
+ "jolt-inlines-blake3",
  "postcard",
  "rayon",
  "serde",
@@ -3209,6 +3215,7 @@ dependencies = [
  "console_error_panic_hook",
  "hex",
  "jolt-core",
+ "jolt-inlines-blake2",
  "postcard",
  "rayon",
  "serde",
@@ -3234,6 +3241,7 @@ dependencies = [
 name = "json-query-guest"
 version = "0.1.0"
 dependencies = [
+ "gjson",
  "jolt-inlines-blake2",
  "jolt-sdk",
  "serde",
@@ -3247,6 +3255,7 @@ dependencies = [
  "console_error_panic_hook",
  "hex",
  "jolt-core",
+ "jolt-inlines-blake2",
  "postcard",
  "rayon",
  "serde",

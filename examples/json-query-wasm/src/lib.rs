@@ -1,6 +1,8 @@
 use std::sync::OnceLock;
 use wasm_bindgen::prelude::*;
 
+extern crate jolt_inlines_blake2;
+
 use common::jolt_device::{MemoryConfig, MemoryLayout};
 use jolt_core::ark_bn254::Fr;
 use jolt_core::curve::Bn254Curve;
@@ -20,7 +22,7 @@ fn base_memory_config() -> MemoryConfig {
         stack_size: 65536,
         max_input_size: 4096,
         max_output_size: 4096,
-        max_untrusted_advice_size: 8192,
+        max_untrusted_advice_size: 65536,
         max_trusted_advice_size: 4096,
         program_size: None,
     }
@@ -46,7 +48,7 @@ fn get_cached() -> &'static CachedPreprocessing {
             bytecode,
             memory_layout,
             memory_init,
-            1048576,
+            4194304,
             e_entry,
         )
         .expect("preprocessing failed");

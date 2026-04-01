@@ -9,8 +9,8 @@ struct Record {
     label: String,
 }
 
-fn build_json() -> Vec<u8> {
-    let records: Vec<Record> = (0..60)
+fn build_json(count: u32) -> Vec<u8> {
+    let records: Vec<Record> = (0..count)
         .map(|i| Record {
             id: i,
             amount: (i as u64 + 1) * 100,
@@ -26,10 +26,31 @@ fn build_json() -> Vec<u8> {
 pub fn main() {
     tracing_subscriber::fmt::init();
 
-    let json_bytes = build_json();
-    println!("JSON size: {} bytes", json_bytes.len());
+    let size_kb: u32 = std::env::args()
+        .nth(1)
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(1);
 
-    let query = std::env::args().nth(1).unwrap_or_else(|| "records.30.amount".to_string());
+    let count = match size_kb {
+        1 => 18,
+        2 => 36,
+        4 => 72,
+        8 => 142,
+        16 => 280,
+        32 => 556,
+        _ => {
+            eprintln!("Usage: json-query <1|2|4|8|16|32> [query]");
+            eprintln!("  Size in KB: 1, 2, 4, 8, 16, or 32");
+            std::process::exit(1);
+        }
+    };
+
+    let query = std::env::args()
+        .nth(2)
+        .unwrap_or_else(|| format!("records.{}.amount", count - 1));
+
+    let json_bytes = build_json(count);
+    println!("Size: ~{}KB ({} records, {} bytes)", size_kb, count, json_bytes.len());
     println!("Query: {query}");
 
     let summary = guest::analyze_json_query(
