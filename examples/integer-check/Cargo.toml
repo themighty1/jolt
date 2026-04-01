@@ -1,0 +1,14 @@
+[package]
+name = "integer-check"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+jolt-sdk = { workspace = true, features = ["host", "zk"] }
+tracing-subscriber.workspace = true
+hex.workspace = true
+jolt-inlines-blake3 = { workspace = true, features = ["host"] }
+guest = { package = "integer-check-guest", path = "./guest" }
+
+[package.metadata.jolt]
+ignored = ["jolt-inlines-blake3"]

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jolt zkVM — Integer Check</title>
+  <style>
+    body { font-family: monospace; max-width: 600px; margin: 40px auto; }
+    input { font-size: 18px; padding: 4px 8px; width: 200px; }
+    button { font-size: 18px; padding: 4px 16px; cursor: pointer; }
+    #output { background: #f4f4f4; padding: 16px; margin-top: 16px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h2>Jolt zkVM — Integer Check (Browser Prover, Multi-threaded)</h2>
+  <p>Proves that a string input is a valid integer &gt; 700, without revealing the value.</p>
+  <div>
+    <input id="input" value="701" placeholder="Enter a number">
+    <button id="btn" onclick="runProve()" disabled>Prove</button>
+  </div>
+  <div id="output">Loading WASM...</div>
+
+  <script type="module">
+    import init, { initThreadPool, preprocess, prove_integer_check } from './pkg/integer_check_wasm.js';
+
+    const out = document.getElementById('output');
+
+    async function setup() {
+      out.textContent = 'Loading WASM...';
+      await init();
+
+      const threads = navigator.hardwareConcurrency || 4;
+      out.textContent = `Initializing ${threads} threads...`;
+      await initThreadPool(threads);
+
+      out.textContent = 'Preprocessing (one-time)...';
+      await new Promise(r => setTimeout(r, 50));
+      const t0 = performance.now();
+      preprocess();
+      const prepTime = ((performance.now() - t0) / 1000).toFixed(1);
+
+      document.getElementById('btn').disabled = false;
+      out.textContent = `Ready (${threads} threads). Preprocessing: ${prepTime}s.`;
+    }
+
+    window.runProve = async function() {
+      const btn = document.getElementById('btn');
+      const input = document.getElementById('input').value;
+
+      btn.disabled = true;
+      out.textContent = `Input: "${input}"\nProving...`;
+
+      await new Promise(r => setTimeout(r, 50));
+
+      const t0 = performance.now();
+      try {
+        const resultJson = prove_integer_check(input);
+        const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+        const result = JSON.parse(resultJson);
+
+        let msg = `Input: "${input}"\n`;
+        msg += `Output: ${result.output}\n`;
+        msg += `Blake3 hash: ${result.blake3_hash}\n`;
+        msg += `Prove time: ${elapsed}s (excluding preprocessing)\n`;
+        msg += `Proof valid: ${result.valid}\n`;
+        if (result.is_gt_700) {
+          msg += `Proven: the input is a valid integer > 700`;
+        } else {
+          msg += `Proven: the input is NOT a valid integer > 700`;
+        }
+        out.textContent = msg;
+      } catch (e) {
+        out.textContent += `\n\nError: ${e}`;
+      }
+      btn.disabled = false;
+    };
+
+    setup();
+  </script>
+</body>
+</html>

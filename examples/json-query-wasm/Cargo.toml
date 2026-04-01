@@ -1,0 +1,19 @@
+[package]
+name = "json-query-wasm"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+jolt-core = { workspace = true, features = ["host", "zk"] }
+common = { workspace = true, features = ["std"] }
+tracer = { workspace = true }
+wasm-bindgen = "0.2"
+postcard = { workspace = true, features = ["use-std"] }
+serde = { workspace = true }
+console_error_panic_hook = "0.1"
+rayon = { workspace = true }
+wasm-bindgen-rayon = "1.2"
+hex.workspace = true

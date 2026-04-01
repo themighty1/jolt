@@ -1,0 +1,16 @@
+[package]
+name = "json-query"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+jolt-sdk = { workspace = true, features = ["host", "zk"] }
+tracing-subscriber.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+hex.workspace = true
+jolt-inlines-blake2 = { workspace = true, features = ["host"] }
+guest = { package = "json-query-guest", path = "./guest" }
+
+[package.metadata.jolt]
+ignored = ["jolt-inlines-blake2"]

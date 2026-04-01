@@ -101,6 +101,15 @@ members = [
   "examples/modinv/guest",
   "examples/advice-demo",
   "examples/advice-demo/guest",
+  "examples/integer-check",
+  "examples/integer-check/guest",
+  "examples/json-parse",
+  "examples/json-parse/guest",
+  "examples/json-query",
+  "examples/json-query/guest",
+  "examples/json-parse-wasm",
+  "examples/json-query-wasm",
+  "examples/integer-check-wasm",
   "examples/sig-recovery/host",
   "examples/sig-recovery/guest",
   "zklean-extractor",
@@ -160,6 +169,14 @@ debug = false
 lto = "fat"
 strip = false
 codegen-units = 1
+
+[profile.wasm]
+inherits = "release"
+debug = false
+lto = "fat"
+strip = "symbols"
+codegen-units = 1
+opt-level = 3
 
 [patch.crates-io]
 ark-bn254 = { git = "https://github.com/a16z/arkworks-algebra", branch = "dev/twist-shout" }

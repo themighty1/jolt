@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jolt zkVM — JSON Query (ZK)</title>
+  <style>
+    body { font-family: monospace; max-width: 700px; margin: 40px auto; }
+    input, textarea { font-size: 14px; padding: 4px 8px; font-family: monospace; }
+    input { width: 300px; }
+    textarea { width: 100%; height: 120px; }
+    button { font-size: 18px; padding: 4px 16px; cursor: pointer; }
+    #output { background: #f4f4f4; padding: 16px; margin-top: 16px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h2>Jolt zkVM — Private JSON Query (ZK, Multi-threaded)</h2>
+  <p>Proves a dot-path query over private JSON. The verifier sees only the query and result, not the JSON.</p>
+  <div>
+    <label>Query: <input id="query" value="records.5.amount"></label>
+    <button id="btn" onclick="runProve()" disabled>Prove</button>
+  </div>
+  <div style="margin-top:8px"><label>Private JSON (not revealed to verifier):</label></div>
+  <textarea id="json" readonly></textarea>
+  <div id="output">Loading WASM...</div>
+
+  <script type="module">
+    import init, { initThreadPool, preprocess, prove_json_query } from './pkg/json_parse_wasm.js';
+
+    function buildJson() {
+      const records = [];
+      for (let i = 0; i < 60; i++) {
+        records.push({
+          id: i,
+          amount: (i + 1) * 100,
+          valid: i % 3 !== 0,
+          label: `item_${String(i).padStart(4, '0')}`
+        });
+      }
+      return JSON.stringify({ records });
+    }
+
+    const json = buildJson();
+    document.getElementById('json').value = json;
+    const out = document.getElementById('output');
+
+    async function setup() {
+      out.textContent = 'Loading WASM...';
+      await init();
+
+      const threads = navigator.hardwareConcurrency || 4;
+      out.textContent = `Initializing ${threads} threads...`;
+      await initThreadPool(threads);
+
+      out.textContent = `Preprocessing (one-time, ~3-5s)...`;
+      await new Promise(r => setTimeout(r, 50));
+      const t0 = performance.now();
+      preprocess();
+      const prepTime = ((performance.now() - t0) / 1000).toFixed(1);
+
+      document.getElementById('btn').disabled = false;
+      out.textContent = `Ready (${threads} threads, ZK mode). Preprocessing: ${prepTime}s. JSON: ${json.length} bytes.`;
+    }
+
+    window.runProve = async function() {
+      const btn = document.getElementById('btn');
+      const query = document.getElementById('query').value;
+
+      btn.disabled = true;
+      out.textContent = `Query: "${query}"\nJSON: ${json.length} bytes (private)\nProving...`;
+
+      await new Promise(r => setTimeout(r, 50));
+
+      const t0 = performance.now();
+      try {
+        const resultJson = prove_json_query(query, json);
+        const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+        const result = JSON.parse(resultJson);
+
+        let msg = `Query: "${query}"\n`;
+        msg += `Value: ${result.value}\n`;
+        msg += `Blake2b hash of JSON: ${result.blake2b_hash}\n`;
+        msg += `Prove time: ${elapsed}s (excluding preprocessing)\n`;
+        msg += `Proof valid: ${result.valid}\n`;
+        msg += `JSON was private (not revealed to verifier)`;
+        out.textContent = msg;
+      } catch (e) {
+        out.textContent += `\n\nError: ${e}`;
+      }
+      btn.disabled = false;
+    };
+
+    setup();
+  </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+[package]
+name = "json-parse-guest"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+guest = []
+
+[dependencies]
+jolt = { package = "jolt-sdk", path = "../../../jolt-sdk" }
+jolt-inlines-blake2.workspace = true
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+serde-json-core = "0.6"
+heapless = { version = "0.8", features = ["serde"] }
