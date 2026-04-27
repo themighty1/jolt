@@ -41,12 +41,17 @@
     const json = buildJson();
     document.getElementById('json').value = json;
     const out = document.getElementById('output');
+    const params = new URLSearchParams(location.search);
+    const headless = params.has('headless');
 
     async function setup() {
       out.textContent = 'Loading WASM...';
       await init();
 
-      const threads = navigator.hardwareConcurrency || 4;
+      const threadsOverride = Number(params.get('threads'));
+      const threads = Number.isFinite(threadsOverride) && threadsOverride > 0
+        ? threadsOverride
+        : (navigator.hardwareConcurrency || 4);
       out.textContent = `Initializing ${threads} threads...`;
       await initThreadPool(threads);
 
@@ -58,9 +63,17 @@
 
       document.getElementById('btn').disabled = false;
       out.textContent = `Ready (${threads} threads, ZK mode). Preprocessing: ${prepTime}s. JSON: ${json.length} bytes.`;
+
+      if (headless) {
+        const queryOverride = params.get('query');
+        if (queryOverride !== null) document.getElementById('query').value = queryOverride;
+        console.log(`BENCH_READY: ${JSON.stringify({ threads, preprocess_s: Number(prepTime), json_bytes: json.length })}`);
+        await runProve();
+        console.log('BENCH_DONE');
+      }
     }
 
-    window.runProve = async function() {
+    async function runProve() {
       const btn = document.getElementById('btn');
       const query = document.getElementById('query').value;
 
@@ -82,11 +95,25 @@
         msg += `Proof valid: ${result.valid}\n`;
         msg += `JSON was private (not revealed to verifier)`;
         out.textContent = msg;
+
+        if (headless) {
+          console.log(`BENCH_RESULT: ${JSON.stringify({
+            example: 'json-parse',
+            query,
+            json_bytes: json.length,
+            value: result.value,
+            blake2b_hash: result.blake2b_hash,
+            prove_s: Number(elapsed),
+            valid: result.valid,
+          })}`);
+        }
       } catch (e) {
         out.textContent += `\n\nError: ${e}`;
+        if (headless) console.log(`BENCH_ERROR: ${String(e)}`);
       }
       btn.disabled = false;
-    };
+    }
+    window.runProve = runProve;
 
     setup();
   </script>

@@ -22,12 +22,17 @@
     import init, { initThreadPool, preprocess, prove_integer_check } from './pkg/integer_check_wasm.js';
 
     const out = document.getElementById('output');
+    const params = new URLSearchParams(location.search);
+    const headless = params.has('headless');
 
     async function setup() {
       out.textContent = 'Loading WASM...';
       await init();
 
-      const threads = navigator.hardwareConcurrency || 4;
+      const threadsOverride = Number(params.get('threads'));
+      const threads = Number.isFinite(threadsOverride) && threadsOverride > 0
+        ? threadsOverride
+        : (navigator.hardwareConcurrency || 4);
       out.textContent = `Initializing ${threads} threads...`;
       await initThreadPool(threads);
 
@@ -39,9 +44,17 @@
 
       document.getElementById('btn').disabled = false;
       out.textContent = `Ready (${threads} threads). Preprocessing: ${prepTime}s.`;
+
+      if (headless) {
+        const inputOverride = params.get('input');
+        if (inputOverride !== null) document.getElementById('input').value = inputOverride;
+        console.log(`BENCH_READY: ${JSON.stringify({ threads, preprocess_s: Number(prepTime) })}`);
+        await runProve();
+        console.log('BENCH_DONE');
+      }
     }
 
-    window.runProve = async function() {
+    async function runProve() {
       const btn = document.getElementById('btn');
       const input = document.getElementById('input').value;
 
@@ -67,11 +80,25 @@
           msg += `Proven: the input is NOT a valid integer > 700`;
         }
         out.textContent = msg;
+
+        if (headless) {
+          console.log(`BENCH_RESULT: ${JSON.stringify({
+            example: 'integer-check',
+            input,
+            output: result.output,
+            blake3_hash: result.blake3_hash,
+            prove_s: Number(elapsed),
+            valid: result.valid,
+            is_gt_700: result.is_gt_700,
+          })}`);
+        }
       } catch (e) {
         out.textContent += `\n\nError: ${e}`;
+        if (headless) console.log(`BENCH_ERROR: ${String(e)}`);
       }
       btn.disabled = false;
-    };
+    }
+    window.runProve = runProve;
 
     setup();
   </script>
